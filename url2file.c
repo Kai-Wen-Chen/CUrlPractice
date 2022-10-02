@@ -38,53 +38,52 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
   return written;
 }
 
-int main(int argc, char *argv[])
-{
-  CURL *curl_handle;
-  static const char *pagefilename = "page.out";
-  FILE *pagefile;
-
-  if(argc < 2) {
-    printf("Usage: %s <URL>\n", argv[0]);
-    return 1;
-  }
-
+CURL* initCURLHandle() {
+  CURL* curl_handle;
   curl_global_init(CURL_GLOBAL_ALL);
-
-  /* init the curl session */
   curl_handle = curl_easy_init();
+  return curl_handle;
+}
 
-  /* set URL to get here */
-  curl_easy_setopt(curl_handle, CURLOPT_URL, argv[1]);
-  curl_easy_setopt(curl_handle, CURLOPT_HTTP09_ALLOWED, 1L);
+void uninitCURLHandle(CURL* curl_handle) {
+  curl_easy_cleanup(curl_handle);
+  curl_global_cleanup();
+}
 
-  /* Switch on full protocol/debug output while testing */
-  curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
+CURLcode setURL(CURL* curl_handle, const char* url) {
+  return curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+}
 
-  /* disable progress meter, set to 0L to enable it */
-  curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
+CURLcode enableHTTP09(CURL* curl_handle, long allowed) {
+  return curl_easy_setopt(curl_handle, CURLOPT_HTTP09_ALLOWED, allowed);
+}
 
-  /* send all data to this function  */
-  curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
+CURLcode enableVerbose(CURL* curl_handle, long allowed) {
+  return curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, allowed);
+}
 
-  /* open the file */
-  pagefile = fopen(pagefilename, "wb");
-  if(pagefile) {
+CURLcode setWriteFunction(CURL* curl_handle, size_t* writeFn) {
+  if (!writeFn)
+    return curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
+  else
+    return curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, *writeFn);
+}
 
-    /* write the page body to this file handle */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, pagefile);
+CURLcode setWriteDataOutputFile(CURL* curl_handle, FILE* file) {
+  return curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, file);
+}
 
-    /* get it! */
-    curl_easy_perform(curl_handle);
-
-    /* close the header file */
-    fclose(pagefile);
+CURLcode writeData(CURL* curl_handle, FILE* file) {
+  if (!file) {
+    printf("Invalid file, please check if it exists\n");
+    return CURLE_WRITE_ERROR;
   }
 
-  /* cleanup curl stuff */
-  curl_easy_cleanup(curl_handle);
+  CURLcode code = setWriteDataOutputFile(curl_handle, file);
+  if (code != CURLE_OK) {
+    printf("Write failed, error code: %d\n", code);
+    return code;
+  }
 
-  curl_global_cleanup();
-
-  return 0;
+  return curl_easy_perform(curl_handle);
 }
