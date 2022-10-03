@@ -1,5 +1,5 @@
 typedef struct FileItem{
     unsigned int seq;
     unsigned short len;
-    char* data;
+    unsigned char* data;
 } FileItem;

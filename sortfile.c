@@ -3,28 +3,63 @@
 #include "fileItem.h"
 
 
-FileItem* initFileItem(FILE* file) {
-    unsigned int seq;
-    unsigned short len;
-    char* data;
-
-    if (fread(&seq, sizeof(unsigned int), 1, file) > 0) {
-        if (fread(&len, sizeof(unsigned short), 1, file) <= 0)
-            return NULL;
-
-        char* data = (char*)malloc(sizeof(char) * len);
-        if (fread(data, sizeof(char) * len, 1, file) <= 0)
-            return NULL;
-    } else
+FileItem** initFileItems(FILE* file, int* count) {
+    FileItem** fileitems = (FileItem**)malloc(sizeof(FileItem) * 200);
+    if (!fileitems) {
+        printf("Cannot create file item array\n");
         return NULL;
+    }
 
-    //printf("%u, %d\n", seq, len);
+    do {
+        char seq_byte[4];
+        char len_byte[2];
+        int c;
 
-    FileItem* fileItem = (FileItem*)malloc(sizeof(FileItem));
-    fileItem->seq = seq;
-    fileItem->len = len;
-    fileItem->data = data;
-    return fileItem;
+        for (int i=0; i<4; ++i) {
+            c = fgetc(file);
+            if (c == EOF) {
+                printf("Read seq failed\n");
+                return NULL;
+            }
+
+            seq_byte[i] = (char)c;
+        }
+
+        for (int i=0; i<2; ++i) {
+            c = fgetc(file);
+            if (c == EOF) {
+                printf("Read len failed\n");
+                return NULL;
+            }
+
+            len_byte[i] = (char)c;
+        }
+
+        FileItem* fileItem = (FileItem*)malloc(sizeof(FileItem));
+        if (!fileItem) {
+            printf("Create file item failed\n");
+            return NULL;
+        }
+        fileItem->seq = *(unsigned int*)seq_byte;
+        fileItem->len = *(unsigned short*)len_byte;
+        fileItem->data = (unsigned char*)malloc(sizeof(unsigned char) * fileItem->len);
+        unsigned short i = 0;
+        
+        for (; i<fileItem->len; ++i) {
+            c = fgetc(file);
+            if (c == EOF) {
+                printf("Read data EOF\n");
+                break;
+            }
+            fileItem->data[i] = (unsigned char)c;
+        }
+        if (i != fileItem->len)
+            fileItem->len = i;
+        fileitems[(*count)++] = fileItem;
+        //printf("#chunk %d: seq = %u, len = %d\n", *count, fileItem->seq, fileItem->len);
+    } while (!feof(file) && !ferror(file));
+    
+    return fileitems;
 }
 
 int compare(const void* a, const void* b) {

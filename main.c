@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "url2file.c"
 #include "sortfile.c"
 
-#define FILE_NAME "data.txt"
+#define FILE_NAME "data.out"
+#define RESULT_NAME "result.out"
 
 
 void getDataFromURL(char* url) {
@@ -18,7 +20,7 @@ void getDataFromURL(char* url) {
 
     /* send all data to file */
     setWriteFunction(curl_handle, NULL);
-    file = fopen(filename, "wb");
+    file = fopen(filename, "w");
     if(file) {
         writeData(curl_handle, file);
         fclose(file);
@@ -28,6 +30,34 @@ void getDataFromURL(char* url) {
     uninitCURLHandle(curl_handle);
 }
 
+void reorderFile() {
+    FILE* file = fopen(FILE_NAME, "r");
+    int count = 0;
+    FileItem** fileitems = initFileItems(file, &count);
+    if (ferror(file) || !fileitems) {
+        printf("Read data.txt failed\n");
+        fclose(file);
+        return;
+    }
+    fclose(file);
+
+    /* reorder file data */
+    sortFileItems(fileitems, count);
+
+    /* write result */
+    FILE* res = fopen(RESULT_NAME, "wb");
+    for (int i=0; i<count; ++i) {
+        printf("seq = %u, len = %d\n", fileitems[i]->seq, fileitems[i]->len);
+        if (fwrite(fileitems[i]->data, sizeof(unsigned char), sizeof(unsigned char) * fileitems[i]->len, res) <= 0) {
+            printf("Write result.out failed\n");
+            break;
+        }
+    }
+
+    fclose(res);
+    free(fileitems);
+}
+
 int main(int argc, char *argv[]) {
     if(argc < 2) {
         printf("Usage: %s <URL>\n", argv[0]);
@@ -35,35 +65,6 @@ int main(int argc, char *argv[]) {
     }
 
     getDataFromURL(argv[1]);
-    FILE* file = fopen(FILE_NAME, "rb");
-    int max_file_num = 200;
-    int count = 0;
-
-    FileItem** fileitems = (FileItem**)malloc(sizeof(FileItem*) * max_file_num);
-    if (!fileitems) {
-        printf("Create file item array failed\n");
-        return 1;
-    }
-
-    while (1) {
-        FileItem* fileItem = initFileItem(file);
-        if (!fileItem)
-            break;
-
-        fileitems[count++] = fileItem;
-
-        if (count >= max_file_num - 20) {
-            max_file_num += 50;
-            FileItem** temp = realloc(fileitems, sizeof(FileItem*) * max_file_num);
-            if (!temp) {
-                printf("Cannot enlarge file item array\n");
-                break;
-            }
-            fileitems = temp;
-        }
-    }
-
-    fclose(file);
-    free(fileitems);
+    reorderFile();
     return 0;
 }
