@@ -20,5 +20,5 @@
 * Execution
   1. Open terminal at this project folder
   2. Input command "gcc main.c -lcurl"
-  3. Check the "data.out" file
+  3. Check the "data.txt" file
   
