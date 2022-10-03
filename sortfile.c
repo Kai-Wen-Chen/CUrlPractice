@@ -9,13 +9,15 @@ FileItem* initFileItem(FILE* file) {
     char* data;
 
     if (fread(&seq, sizeof(unsigned int), 1, file) > 0) {
-        fread(&len, sizeof(unsigned short), 1, file);
+        if (fread(&len, sizeof(unsigned short), 1, file) <= 0)
+            return NULL;
 
         char* data = (char*)malloc(sizeof(char) * len);
-        fread(data, sizeof(char) * len, 1, file);
+        if (fread(data, sizeof(char) * len, 1, file) <= 0)
+            return NULL;
     } else
         return NULL;
-    
+
     //printf("%u, %d\n", seq, len);
 
     FileItem* fileItem = (FileItem*)malloc(sizeof(FileItem));
@@ -26,12 +28,14 @@ FileItem* initFileItem(FILE* file) {
 }
 
 int compare(const void* a, const void* b) {
-    FileItem* fileItem1 = (FileItem*)a;
-    FileItem* fileItem2 = (FileItem*)b;
+    FileItem* fileItem1 = *(FileItem**)a;
+    FileItem* fileItem2 = *(FileItem**)b;
 
-    return (fileItem1->seq < fileItem2->seq);
+    if (fileItem1->seq < fileItem2->seq) return -1;
+    else if (fileItem1->seq > fileItem2->seq) return 1;
+    else return 0;
 }
 
-void sortFileItems(FileItem* files, size_t file_num) {
-    qsort(files, file_num, sizeof(FileItem), compare);
+void sortFileItems(FileItem** files, size_t file_num) {
+    qsort(files, file_num, sizeof(FileItem*), compare);
 }
