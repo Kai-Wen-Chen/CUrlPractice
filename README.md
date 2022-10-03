@@ -20,5 +20,5 @@
 * Execution
   1. Open terminal at this project folder
   2. Input command "gcc main.c -lcurl"
-  3. Check the "data.txt" file
-  
+  3. Input command "./a [URL:PORT]" (ex: ./a www.example.com:1234)
+  4. Check the "data.txt" file  
