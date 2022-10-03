@@ -25,4 +25,4 @@
   1. Open terminal at this project folder
   2. Input command "gcc main.c -lcurl -o [output_name]" (ex: gcc main.c -lcurl -o application.exe)
   3. Input command "./[output_name] [URL:PORT]" (ex: ./application.exe www.example.com:1234)
-  4. Check the "data.txt" file  
+  4. Check the "data.out" and "result.out" files, the former is the data downloaded from server and the latter is the result file with data reordered.
