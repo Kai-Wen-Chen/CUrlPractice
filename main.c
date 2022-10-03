@@ -36,15 +36,34 @@ int main(int argc, char *argv[]) {
 
     getDataFromURL(argv[1]);
     FILE* file = fopen(FILE_NAME, "rb");
-    FileItem* fileItem = NULL;
-    do {
-        if (fileItem) {
-            printf("%u, %d\n", fileItem->seq, fileItem->len);
-            free(fileItem);
+    int max_file_num = 200;
+    int count = 0;
+
+    FileItem** fileitems = (FileItem**)malloc(sizeof(FileItem*) * max_file_num);
+    if (!fileitems) {
+        printf("Create file item array failed\n");
+        return 1;
+    }
+
+    while (1) {
+        FileItem* fileItem = initFileItem(file);
+        if (!fileItem)
+            break;
+
+        fileitems[count++] = fileItem;
+
+        if (count >= max_file_num - 20) {
+            max_file_num += 50;
+            FileItem** temp = realloc(fileitems, sizeof(FileItem*) * max_file_num);
+            if (!temp) {
+                printf("Cannot enlarge file item array\n");
+                break;
+            }
+            fileitems = temp;
         }
-        fileItem = initFileItem(file);        
-    } while (fileItem);
+    }
 
     fclose(file);
+    free(fileitems);
     return 0;
 }
