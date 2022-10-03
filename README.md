@@ -1,5 +1,9 @@
 # CUrlPractice
 
+* Goal
+
+  Retrieve file whose data may be passed as multilple packets in arbitrary order, reorder the data to form the expected file with sequence number of packets
+
 * Environment
   
   Unix OS (my environment: MSYS2 in Windows)
@@ -19,6 +23,6 @@
 
 * Execution
   1. Open terminal at this project folder
-  2. Input command "gcc main.c -lcurl"
-  3. Input command "./a [URL:PORT]" (ex: ./a www.example.com:1234)
+  2. Input command "gcc main.c -lcurl -o [output_name]" (ex: gcc main.c -lcurl -o application.exe)
+  3. Input command "./[output_name] [URL:PORT]" (ex: ./application.exe www.example.com:1234)
   4. Check the "data.txt" file  
