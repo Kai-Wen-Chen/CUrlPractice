@@ -10,7 +10,7 @@
 
 * Prerequisite of Module/Package
 
-  autoconf automake libtool openssl libcurl
+  autoconf automake libtool openssl libcurl gcc
 
 * libcurl installation (refer to https://curl.se/ and https://github.com/curl/curl instructions)
   1. Clone the source code from https://github.com/curl/curl
